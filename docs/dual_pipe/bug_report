@@ -1,0 +1,16 @@
+
+
+
+/* Name: Deadlock bug with named pipes
+ * Status: Fixed!
+ * Fixer: Gabriel Szopinski
+ * Description: two programs were deadlocked on opening named processes
+ * Date: 2/4/2026
+ */ 
+
+/* Name: Semaphore bug (unlinking early!)
+ * Status: Fixed!
+ * Fixer: Gabriel Szopinski
+ * Description: Depending on who started first, initializer starts first, waiter will block/deadlock
+ * Date: 2/4/2026
+ */  

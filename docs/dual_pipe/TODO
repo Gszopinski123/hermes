@@ -1,0 +1,2 @@
+_ Need to cleanup all file descriptors/file_pointers(automating/abstracting out will be the best option most likely)
+_ abstract most of the code into a black box and one entity
