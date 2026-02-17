@@ -33,6 +33,7 @@ char* convert_log_level(log_level_t level) {
  * Description: This function is to make a log message based on the given arguments
  *               it is then to append the log to the log file as provied in logging.h
  */
+// Think about adding semaphores for synchronization
 void log_msg(log_level_t level, const char* msg) {
     log_file = fopen(LOG_FILE,"a");
     char * level_str = convert_log_level(level);

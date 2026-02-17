@@ -17,6 +17,18 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
+typedef enum client_request {
+    MESSAGING,
+    IOT
+    // These options are under proposition
+    // FILE,
+    // STORAGE,
+    // VPN
+} client_request_t;
+typedef struct client_request_hdr {
+    client_request_t req
+} Client_request_hdr;
+
 //server side
 int open_for_connections(const char* ip,int port);
 

@@ -37,6 +37,43 @@ int connect_to_server(const char* ip,int port) {
     free(server);
     return sockfd;
 }
+int initial_request(int server_sock_fd, client_request_t req) {
+    log_msg(NETWORK,"initial_request: starting client request");
+    char*buf = malloc(BUFFER_SIZE);
+    if (buf == NULL) {
+        log_msg(ERROR,"initial_request: resource allocation failure");
+        return -1;
+    }
+    Client_request_hdr *new_req = (Client_request_hdr*)buf;
+    new_req->req = req;
+    int bytes = send(server_sock_fd, buf, BUFFER_SIZE-1, NO_FLAGS);
+    if (bytes < 0) {
+        free(buf);
+        log_msg(ERROR,"initial_request: request did not send");
+        return -1;
+    }
+    free(buf);
+    log_msg(NETWORK,"initial_request: client request complete");
+    return 0;
+}
+
+client_request_t initial_accept(int client_sock_fd) {
+    log_msg(NETWORK,"initial_accept: starting client accept");
+    char *buf = malloc(BUFFER_SIZE);
+    if (buf == NULL) {
+        log_msg(ERROR,"initial_accept: resource allocation failure");
+    }
+    int bytes = recv(client_sock_fd,buf,BUFFER_SIZE-1,NO_FLAGS);
+    if (bytes < 0) {
+        log_msg(ERROR,"initial_accept: message failed to receive");
+    }
+    Client_request_hdr* new_req = (Client_request_hdr*)buf;
+    client_request_t cli_req = new_req->req;
+    free(buf);
+    log_msg(NETWORK,"initial_accept: client accept completed");
+    return cli_req;
+}
+
 int connect_to_peer(const char* ip,int port) {
     return 0;
 }
@@ -93,4 +130,9 @@ int open_for_connections(const char* ip,int port) {
     free(server);
     log_msg(NETWORK,"open_for_connection: Server Successifully setup");
     return sockfd;
+}
+// need to start storing connections
+// a slight gap between the handshake and the initial message
+int accept_connections(int sockfd) {
+
 }
