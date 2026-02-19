@@ -17,8 +17,11 @@
 #include <stdio.h>
 //structs need for processing users properly
 // Needs to be updated but ok for now 2/7/26
+//User_info: ip must be heap allocated!
 typedef struct user_info {
     char* ip;
+    int fd;
+    int is_open;
 } User_Info;
 
 typedef struct node {
@@ -40,4 +43,7 @@ extern Linked_List *list;
 int initialize_list();
 void insert(User_Info*);
 void delete(User_Info*);
+void destroy_user_info(User_Info*);
+void destroy_node(Node*);
+int destroy_list();
 #endif

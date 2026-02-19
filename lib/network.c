@@ -4,6 +4,7 @@
  */
 
 #include "network.h"
+
 /* Function name: connect_to_server
  * Arguments: const char* ip; the ip address associated with the always on server
               int port; the port associated with the always on server
@@ -87,7 +88,7 @@ int listen_for_peer() {
  *              via future data structures that are allocated or other resources
  */
 int close_connection(int sockfd) {
-    log_msg(NETWORK,"close_connection: closing server connection");
+    log_msg(NETWORK,"close_connection: ");
     close(sockfd);
     return 0;
 }
@@ -106,13 +107,16 @@ int open_for_connections(const char* ip,int port) {
     }
     int af;
     struct sockaddr_in* server = malloc(sizeof(struct sockaddr_in));
+    inet_pton(AF_INET,ip,&server->sin_addr);
+    server->sin_port = htons(port);
+    server->sin_family = AF_INET;
     if (server == NULL) {
         log_msg(ERROR,"open_for_connection: failure to allocated resources");
         close(sockfd);
         return -1;
     }
-    int server_len = sizeof(struct sockaddr_in);
-    af = bind(sockfd,(struct sockaddr*)server,&server_len);
+    socklen_t server_len = sizeof(struct sockaddr_in);
+    af = bind(sockfd,(struct sockaddr*)server,server_len);
     if (af < 0) {
         log_msg(ERROR,"open_for_connection: failure to bind socket");
         close(sockfd);
@@ -134,5 +138,20 @@ int open_for_connections(const char* ip,int port) {
 // need to start storing connections
 // a slight gap between the handshake and the initial message
 int accept_connections(int sockfd) {
-
+    log_msg(NETWORK,"accept_connection: accepting connections!");
+    struct sockaddr_in* client;
+    socklen_t client_len = 0;
+    int client_fd = accept(sockfd,(struct sockaddr*)client,&client_len);
+    char *ip = malloc(INET_ADDRSTRLEN); 
+    User_Info *new_user = malloc(sizeof(User_Info));
+    if (ip == NULL || new_user == NULL) {
+        log_msg(ERROR,"accept_connection: resource allocation failure!\n");
+        return -1;
+    }
+    inet_ntop(AF_INET,&client->sin_addr,ip,INET_ADDRSTRLEN);
+    new_user->ip = ip;
+    new_user->fd = client_fd;
+    list->insert(new_user);
+    log_msg(NETWORK,"accept_connection: client accepted!");
+    return client_fd;
 }

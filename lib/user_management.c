@@ -85,3 +85,28 @@ void insert(User_Info* new_data) {
     list->last = new_node;
     return;
 }
+
+void destroy_user_info(User_Info* curr) {
+    free(curr->ip);
+    free(curr);
+}
+
+void destroy_node(Node *curr) {
+    destroy_user_info(curr->data);
+    free(curr);
+}
+
+int destroy_list() {
+    if (list == NULL) {
+        return 0;
+    }
+    Node* prev;
+    Node* cur = list->head;
+    while (cur != NULL) {
+        prev = cur;
+        cur = cur->next;
+        destroy_node(prev);
+    }
+    free(list);
+    return 0;
+}
