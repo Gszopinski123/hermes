@@ -11,6 +11,9 @@ int main(int argc, char** argv) {
         printf("Not enough arguments!\n");
         return 1;
     }
+    #ifdef SERVER_CLIENT_DIFFERENT_MACHINE
+        initialize_logging();
+    #endif
     #ifdef PIPES_OPEN
         int err = initialize_startup(IN_PIPE_NAME,OUT_PIPE_NAME);
         if (err < 0) {
@@ -39,6 +42,9 @@ int main(int argc, char** argv) {
         write_pipe(wfd,"Hello driver!");
         close_pipe_fd(rfd);
         close_pipe_fd(wfd);
+    #endif
+    #ifdef SERVER_CLIENT_DIFFERENT_MACHINE
+        complete_logging();
     #endif
     return 0;
 }

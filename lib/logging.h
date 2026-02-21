@@ -10,8 +10,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <semaphore.h>
+#include "dual_pipe.h"
 
 #define LOG_FILE "log/app.log"
+#define LOG_SEMAPHORE "/log"
 // Log types important for logging
 typedef enum log_level {
     NETWORK,
@@ -24,6 +27,8 @@ typedef enum log_level {
 char* convert_log_level(log_level_t);
 void log_msg(log_level_t, const char*);
 
-
+// Mutual Exclusion
+int initialize_logging();
+void complete_logging();
 
 #endif

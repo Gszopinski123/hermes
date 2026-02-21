@@ -9,6 +9,7 @@
 #define DUAL_PIPE_H
 #define WR_RD_USR_ONLY 0660
 #define NO_FLAGS 0
+#define CLOSED_SEMAPHORE 0
 #define SEMAPHORE_TAG "/pipes_ready"
 #define MAX_MSG_SIZE 1024
 #define BUFFER_SIZE 1024

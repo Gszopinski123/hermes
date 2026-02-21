@@ -65,7 +65,7 @@ int write_pipe_setup(const char* filepath) {
  */
 int initialize_startup(const char* in_path, const char* out_path) {
     log_msg(PIPE,"initialing startup: semaphore creation");
-    sem_t *sem = sem_open(SEMAPHORE_TAG,O_CREAT, WR_RD_USR_ONLY, NO_FLAGS);
+    sem_t *sem = sem_open(SEMAPHORE_TAG,O_CREAT, WR_RD_USR_ONLY, CLOSED_SEMAPHORE);
     if (sem == SEM_FAILED) {
         log_msg(ERROR,"initialize_startup: semaphore creation failure");
         return -1;

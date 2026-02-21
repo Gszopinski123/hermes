@@ -8,8 +8,9 @@ int main(int argc, char** argv) {
     if (argc < 3) {
         return -1;
     }
+    initialize_logging();
     //data structure creation
-    initialize_list();
+    //initialize_list();
     //server creation    
     char*ip = argv[1];
     int port = atoi(argv[2]);
@@ -25,6 +26,7 @@ int main(int argc, char** argv) {
     close_connection(clientfd);
     
     //data structure destruction issue with this
-    destroy_list();
+    //destroy_list();
+    complete_logging();
     return 0;
 }

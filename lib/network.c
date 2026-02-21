@@ -38,7 +38,8 @@ int connect_to_server(const char* ip,int port) {
     free(server);
     return sockfd;
 }
-int initial_request(int server_sock_fd, client_request_t req) {
+
+int initial_request(int server_sock_fd, client_request_t req, int port_for_peers) {
     log_msg(NETWORK,"initial_request: starting client request");
     char*buf = malloc(BUFFER_SIZE);
     if (buf == NULL) {
@@ -47,6 +48,7 @@ int initial_request(int server_sock_fd, client_request_t req) {
     }
     Client_request_hdr *new_req = (Client_request_hdr*)buf;
     new_req->req = req;
+    new_req->port_for_peers = port_for_peers;
     int bytes = send(server_sock_fd, buf, BUFFER_SIZE-1, NO_FLAGS);
     if (bytes < 0) {
         free(buf);
@@ -58,7 +60,7 @@ int initial_request(int server_sock_fd, client_request_t req) {
     return 0;
 }
 
-client_request_t initial_accept(int client_sock_fd) {
+Client_request_hdr initial_accept(int client_sock_fd) {
     log_msg(NETWORK,"initial_accept: starting client accept");
     char *buf = malloc(BUFFER_SIZE);
     if (buf == NULL) {
@@ -69,10 +71,11 @@ client_request_t initial_accept(int client_sock_fd) {
         log_msg(ERROR,"initial_accept: message failed to receive");
     }
     Client_request_hdr* new_req = (Client_request_hdr*)buf;
-    client_request_t cli_req = new_req->req;
+    Client_request_hdr* cli_req = malloc(sizeof(Client_request_hdr));
+    memcpy(cli_req,new_req,sizeof(Client_request_hdr));
     free(buf);
     log_msg(NETWORK,"initial_accept: client accept completed");
-    return cli_req;
+    return *cli_req;
 }
 
 int connect_to_peer(const char* ip,int port) {
@@ -137,21 +140,64 @@ int open_for_connections(const char* ip,int port) {
 }
 // need to start storing connections
 // a slight gap between the handshake and the initial message
-int accept_connections(int sockfd) {
+User_Info* accept_connections(int sockfd) {
     log_msg(NETWORK,"accept_connection: accepting connections!");
-    struct sockaddr_in* client;
+    struct sockaddr_in* client = malloc(sizeof(struct sockaddr_in));
+    if (client == NULL) {
+        log_msg(ERROR,"accept_connection: resource allocation failure!\n");
+        return NULL; 
+    }
     socklen_t client_len = 0;
     int client_fd = accept(sockfd,(struct sockaddr*)client,&client_len);
     char *ip = malloc(INET_ADDRSTRLEN); 
     User_Info *new_user = malloc(sizeof(User_Info));
     if (ip == NULL || new_user == NULL) {
         log_msg(ERROR,"accept_connection: resource allocation failure!\n");
-        return -1;
+        return NULL;
     }
     inet_ntop(AF_INET,&client->sin_addr,ip,INET_ADDRSTRLEN);
     new_user->ip = ip;
     new_user->fd = client_fd;
-    list->insert(new_user);
+    new_user->port_for_server = ntohs(client->sin_port);
     log_msg(NETWORK,"accept_connection: client accepted!");
-    return client_fd;
+    return new_user;
+}
+
+
+int send_client_peers(User_Info* user) {
+    log_msg(NETWORK,"send_client_peers: starting transfer of list");
+    /* 
+    1. find client's request type
+    2. gather peers in request type
+    3. prepare to send, proper headers etc
+    4. send all peers based on client's request
+    5. exit and either close this fd or leave open (client option?)
+    question: do we allow the user to figure out not to send itself data? yes for now.
+    */
+    char* buf = malloc(MAX_MSG_SIZE);
+    list[user->req]->insert(user,user->req);
+    int num_of_peers = list[user->req]->len;
+    int payload_size_remaining = MAX_MSG_SIZE - sizeof(Server_packet_hdr);
+    // (sizeof(Peer_meta_data) * num_of_peers) -> raw bytes (or total bytes of payload)
+    // / payload_size_remaining -> num of chunks + 1
+    int num_of_packets_required = ((sizeof(Peer_meta_data) * num_of_peers) \
+                                    / payload_size_remaining) + 1;
+    Node*left_over = list[user->req]->head;
+    for (int i = 0; i != num_of_packets_required; i++) {
+        Peer_list_hdr peers_info;
+        peers_info.num_of_peers = payload_size_remaining / sizeof(Peer_meta_data);
+        int payload_size = peers_info.num_of_peers * sizeof(Peer_meta_data);
+        Server_packet_hdr *pkt = (Server_packet_hdr*)buf;
+        pkt->opt=PEER_LIST;
+        pkt->payload_size=payload_size;
+        pkt->hdr_option.peer=peers_info;
+        Peer_meta_data *peer = (Peer_meta_data*)(pkt+1);
+        for (int j = 0; j != peers_info.num_of_peers; j++) {
+            (peer+j)->ip = left_over->data->ip;
+            (peer+j)->port = left_over->data->port_for_peers;
+        }
+        send(user->fd,buf,MAX_MSG_SIZE,NO_FLAGS);
+    }
+    log_msg(NETWORK,"send_client_peers: completed transfer of peer list");
+    return 0;
 }

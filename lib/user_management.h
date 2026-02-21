@@ -15,13 +15,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "network.h"
+#include "client_request.h"
 //structs need for processing users properly
 // Needs to be updated but ok for now 2/7/26
+
+
 //User_info: ip must be heap allocated!
-typedef struct user_info {
+typedef struct user_info {// 24 bytes?
     char* ip;
     int fd;
     int is_open;
+    int port_for_peers;
+    int port_for_server;
+    client_request_t req;
 } User_Info;
 
 typedef struct node {
@@ -33,17 +40,21 @@ typedef struct linked_list {
     Node* head;
     Node* last;
     int len;
-    void(*insert)(User_Info*);
-    void(*delete)(User_Info*);
+    void(*insert)(User_Info*,client_request_t);
+    void(*delete)(User_Info*,client_request_t);
+    int(*find)(User_Info*,client_request_t);
 } Linked_List;
 
-extern Linked_List *list;
+extern Linked_List *list[SIZE_CLIENT_REQ];
 
 //functions associated with a linked_list
-int initialize_list();
-void insert(User_Info*);
-void delete(User_Info*);
+int initialize_list(client_request_t);
+int initialize_management();
+void insert(User_Info*,client_request_t);
+void delete(User_Info*,client_request_t);
+int find(User_Info*,client_request_t);
 void destroy_user_info(User_Info*);
 void destroy_node(Node*);
-int destroy_list();
+int destroy_list(client_request_t);
+int destroy_management();
 #endif

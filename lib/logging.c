@@ -7,6 +7,7 @@
 #include "logging.h"
 //global log file
 static FILE * log_file;
+sem_t *logging_sem;
 /* Function name: convert_log_level
  * Arguments: log_level_t level; This is the enum to determine what kind of log
  * return: char*; a string that contains the typed out enum
@@ -35,6 +36,7 @@ char* convert_log_level(log_level_t level) {
  */
 // Think about adding semaphores for synchronization
 void log_msg(log_level_t level, const char* msg) {
+    sem_wait(logging_sem);
     log_file = fopen(LOG_FILE,"a");
     char * level_str = convert_log_level(level);
     time_t time_now; 
@@ -43,4 +45,20 @@ void log_msg(log_level_t level, const char* msg) {
     time_as_str[strlen(time_as_str)-1] = '\0';
     fprintf(log_file,"[%s] [%s] %s\n",time_as_str,level_str,msg);
     fclose(log_file);
+    sem_post(logging_sem);
+}
+
+
+int initialize_logging() {
+    logging_sem = sem_open(LOG_SEMAPHORE,O_CREAT,WR_RD_USR_ONLY,CLOSED_SEMAPHORE);
+    if (logging_sem == SEM_FAILED) {
+        return -1;
+    }
+    sem_post(logging_sem);
+    return 0;
+}
+
+void complete_logging() {
+    sem_unlink(LOG_SEMAPHORE);
+    sem_close(logging_sem);
 }
